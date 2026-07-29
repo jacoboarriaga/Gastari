@@ -38,7 +38,7 @@
                 <i data-lucide="layout-dashboard"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="{{ url_for('transactions.index') }}" class="nav-item {% if 'transaction' in request.endpoint %}active{% endif %}">
+            <a href="{{ url_for('transactions.index') }}" class="nav-item {% if request.endpoint == 'transactions.index' %}active{% endif %}">
                 <i data-lucide="arrow-left-right"></i>
                 <span>Movimientos</span>
             </a>
@@ -115,7 +115,7 @@
             <a href="{{ url_for('dashboard.index') }}" class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                 <i data-lucide="house"></i>
             </a>
-            <a href="{{ url_for('transactions.index') }}" class="bottom-nav-item {% if 'transaction' in request.endpoint %}active{% endif %}">
+            <a href="{{ url_for('transactions.index') }}" class="bottom-nav-item {% if request.endpoint == 'transactions.index' %}active{% endif %}">
                 <i data-lucide="arrow-left-right"></i>
             </a>
             <a href="{{ url_for('transactions.add') }}" class="bottom-nav-item {% if request.endpoint == 'transactions.add' %}active{% endif %}">

@@ -158,38 +158,54 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
     var loader = document.getElementById('pageLoader');
     if (!loader) return;
 
-    // Complete the loading bar when page is fully loaded
-    function finishLoad() {
-        loader.classList.remove('loading');
+    // Animate loading completion on every page load
+    function animateLoad() {
+        // Start hidden
+        loader.style.width = '0';
+        loader.style.opacity = '1';
+        // Force reflow
+        void loader.offsetWidth;
+        // Animate to full
+        loader.style.transition = 'width 0.4s cubic-bezier(0.4,0,0.2,1)';
         loader.style.width = '100%';
+        // Fade out after completion
         setTimeout(function() {
-            loader.style.width = '0';
-        }, 200);
+            loader.style.transition = 'opacity 0.3s ease';
+            loader.style.opacity = '0';
+        }, 500);
     }
 
-    // Top bar on link clicks
+    // Run on first paint
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', animateLoad);
+    } else {
+        animateLoad();
+    }
+
+    // Also on pageshow (for back/forward cache)
+    window.addEventListener('pageshow', animateLoad);
+
+    // Show loading bar when clicking internal links
     document.addEventListener('click', function(e) {
         var link = e.target.closest('a');
         if (link) {
             var href = link.getAttribute('href');
             if (href && href.indexOf('#') !== 0 && href.indexOf('javascript:') !== 0 && !link.hasAttribute('download')) {
-                loader.classList.add('loading');
+                loader.style.transition = 'none';
+                loader.style.opacity = '1';
+                loader.style.width = '20%';
             }
         }
     });
 
     // Form submission: show loader + disable button
     document.addEventListener('submit', function(e) {
-        loader.classList.add('loading');
+        loader.style.transition = 'none';
+        loader.style.opacity = '1';
+        loader.style.width = '30%';
         var btn = e.target.querySelector('button[type="submit"], input[type="submit"]');
         if (btn && !btn.classList.contains('btn-loading')) {
             btn.classList.add('btn-loading');
         }
     });
-
-    if (document.readyState === 'complete') {
-        finishLoad();
-    } else {
-        window.addEventListener('load', finishLoad);
-    }
 })();
