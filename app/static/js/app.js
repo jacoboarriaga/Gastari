@@ -161,14 +161,13 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
     // Complete the loading bar when page is fully loaded
     function finishLoad() {
         loader.classList.remove('loading');
-        // Briefly show full bar, then hide
         loader.style.width = '100%';
         setTimeout(function() {
             loader.style.width = '0';
         }, 200);
     }
 
-    // Trigger on any link/form click
+    // Top bar on link clicks
     document.addEventListener('click', function(e) {
         var link = e.target.closest('a');
         if (link) {
@@ -179,11 +178,15 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
         }
     });
 
-    document.addEventListener('submit', function() {
+    // Form submission: show loader + disable button
+    document.addEventListener('submit', function(e) {
         loader.classList.add('loading');
+        var btn = e.target.querySelector('button[type="submit"], input[type="submit"]');
+        if (btn && !btn.classList.contains('btn-loading')) {
+            btn.classList.add('btn-loading');
+        }
     });
 
-    // Stop after window loads
     if (document.readyState === 'complete') {
         finishLoad();
     } else {

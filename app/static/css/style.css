@@ -51,7 +51,7 @@
     --sidebar-border: #f2f2f7;
     --glass-bg: rgba(255,255,255,0.72);
     --glass-border: rgba(255,255,255,0.4);
-    --bottomnav-h: 52px;
+    --bottomnav-h: 64px;
     /* Chart colors */
     --chart-grid: rgba(0,0,0,0.06);
     --chart-fill: rgba(0,0,0,0.1);
@@ -666,11 +666,12 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
 /* --- Page Loader (top loading bar) --- */
 .page-loader {
     position: fixed; top: 0; left: 0;
-    width: 100%; height: 3px;
+    width: 100%; height: 4px;
     z-index: 9999;
     background: transparent;
     pointer-events: none;
     transition: opacity 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 .page-loader::before {
     content: '';
@@ -678,8 +679,7 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
     top: 0; left: 0;
     width: 0; height: 100%;
     background: var(--indigo);
-    border-radius: 0 2px 2px 0;
-    transition: width 0.4s ease;
+    border-radius: 0 3px 3px 0;
 }
 .page-loader.loading::before {
     width: 60%;
@@ -689,6 +689,48 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
     0%   { left: -40%; width: 30%; }
     50%  { left: 35%;  width: 50%; }
     100% { left: 110%; width: 30%; }
+}
+
+/* --- Button loading state --- */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 18px; height: 18px;
+    border: 2px solid var(--primary-text);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Full-page loading overlay --- */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: var(--bg-app);
+    justify-content: center;
+    align-items: center;
+}
+.loading-overlay.show {
+    display: flex;
+}
+.loading-overlay .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--indigo);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
 }
 
 /* --- Mobile Bottom Nav (Minimalist Floating Dock) --- */
@@ -701,8 +743,8 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
     z-index: 200;
     width: 88%;
     max-width: 480px;
-    padding: 6px 12px;
-    border-radius: 22px;
+    padding: 8px 14px;
+    border-radius: 24px;
     background: rgba(255,255,255,0.72);
     -webkit-backdrop-filter: saturate(180%) blur(40px);
     backdrop-filter: saturate(180%) blur(40px);
@@ -724,16 +766,16 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
     align-items: center;
     justify-content: center;
     flex: 1;
-    height: 40px;
+    height: 48px;
     color: var(--text-muted);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     transition: color 0.2s ease;
     position: relative;
     border: none; background: none; cursor: pointer;
-    border-radius: 10px;
+    border-radius: 12px;
 }
-.bottom-nav-item svg { width: 22px; height: 22px; transition: transform 0.15s ease; }
+.bottom-nav-item svg { width: 26px; height: 26px; transition: transform 0.15s ease; }
 .bottom-nav-item.active { color: var(--indigo); }
 .bottom-nav-item.active svg { transform: scale(1.08); }
 .bottom-nav-item::after {
