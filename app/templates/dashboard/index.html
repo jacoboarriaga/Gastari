@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="summary-cards">
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="trending-up"></i></div>
+        <div class="card-info">
+            <span class="card-label">Ingresos del mes</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_income) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="trending-down"></i></div>
+        <div class="card-info">
+            <span class="card-label">Gastos del mes</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_expenses) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="piggy-bank"></i></div>
+        <div class="card-info">
+            <span class="card-label">Ahorro del mes</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_savings) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="wallet"></i></div>
+        <div class="card-info">
+            <span class="card-label">Balance total</span>
+            <span class="card-value">${{ "{:,.2f}".format(total_balance) }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="card-header">
+            <h3>Gastos diarios (30 dias)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <div class="card-header">
+            <h3>Gastos por categoria</h3>
+        </div>
+        <div class="chart-container chart-donut">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="section-card">
+        <div class="card-header">
+            <h3>Cuentas</h3>
+            <a href="{{ url_for('accounts.add') }}" class="btn btn-sm btn-ghost"><i data-lucide="plus"></i> Nueva</a>
+        </div>
+        <div class="accounts-list">
+            {% for account in accounts %}
+            <div class="account-item">
+                <div class="account-icon">
+                    <i data-lucide="{{ account.icon }}"></i>
+                </div>
+                <div class="account-info">
+                    <span class="account-name">{{ account.name }}</span>
+                    <span class="account-type">{{ account.account_type | replace('_', ' ') | title }}</span>
+                </div>
+                <span class="account-balance">
+                    ${{ "{:,.2f}".format(account.balance) }}
+                </span>
+            </div>
+            {% else %}
+            <div class="empty-state-sm">
+                <p>No tienes cuentas registradas</p>
+                <a href="{{ url_for('accounts.add') }}" class="btn btn-sm btn-primary">Nueva Cuenta</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="card-header">
+            <h3>Movimientos recientes</h3>
+            <a href="{{ url_for('transactions.index') }}" class="btn btn-sm btn-ghost">Ver todo <i data-lucide="arrow-right"></i></a>
+        </div>
+        <div class="transactions-list">
+            {% for t in recent_transactions %}
+            <div class="transaction-item">
+                <div class="transaction-icon">
+                    {% if t.transaction_type == 'income' %}
+                        <i data-lucide="arrow-down-left"></i>
+                    {% elif t.transaction_type == 'expense' %}
+                        <i data-lucide="arrow-up-right"></i>
+                    {% else %}
+                        <i data-lucide="repeat"></i>
+                    {% endif %}
+                </div>
+                <div class="transaction-info">
+                    <span class="transaction-desc">{{ t.description or (t.category.name if t.category else 'Sin descripcion') }}</span>
+                    <span class="transaction-date">{{ t.date.strftime('%d %b') }}</span>
+                </div>
+                <span class="transaction-amount">
+                    {% if t.transaction_type == 'income' %}+{% elif t.transaction_type == 'expense' %}-{% endif %}${{ "{:,.2f}".format(t.amount) }}
+                </span>
+            </div>
+            {% else %}
+            <div class="empty-state-sm">
+                <p>Sin movimientos recientes</p>
+                <a href="{{ url_for('transactions.add') }}" class="btn btn-sm btn-primary">Nuevo Movimiento</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if active_budgets %}
+<div class="section-card">
+    <div class="card-header">
+        <h3>Presupuestos activos</h3>
+        <a href="{{ url_for('budgets.index') }}" class="btn btn-sm btn-ghost">Ver todos</a>
+    </div>
+    <div class="budgets-grid">
+        {% for budget in active_budgets %}
+        <div class="budget-item">
+            <div class="budget-info">
+                <span class="budget-name">{{ budget.name }}</span>
+                <span class="budget-amount">${{ "{:,.2f}".format(budget.spent) }} / ${{ "{:,.2f}".format(budget.amount) }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"
+                     style="width: {{ [budget.progress_percent, 100] | min }}%"></div>
+            </div>
+            <span class="budget-percent">{{ budget.progress_percent }}%</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dailyData = {{ daily_expenses | tojson }};
+    const categoryData = {{ expense_by_category | tojson }};
+
+    // Radar Chart - Gastos diarios agrupados por semana
+    const weeklyLabels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'];
+    const weeklyData = [0, 0, 0, 0, 0];
+    dailyData.forEach((d, i) => {
+        const weekIndex = Math.min(Math.floor(i / 7), 4);
+        weeklyData[weekIndex] += d.amount;
+    });
+    const radarCtx = document.getElementById('dailyChart').getContext('2d');
+    new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: weeklyLabels,
+            datasets: [{
+                label: 'Gastos semanales',
+                data: weeklyData,
+                backgroundColor: chartBg(0.1),
+                borderColor: chartLine(),
+                borderWidth: 2,
+                pointBackgroundColor: chartLine(),
+                pointBorderColor: chartCardBg(),
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    grid: { color: chartGrid() },
+                    angleLines: { color: chartGrid() },
+                    pointLabels: { font: { size: 12, weight: 500 }, color: chartText() },
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+
+    // Polar Area - Gastos por categoria
+    if (categoryData.length > 0) {
+        const polarCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(polarCtx, {
+            type: 'polarArea',
+            data: {
+                labels: categoryData.map(c => c[0]),
+                datasets: [{
+                    data: categoryData.map(c => parseFloat(c[2])),
+                    backgroundColor: categoryData.map(function(c, i) {
+                        return chartBg(0.15 + (i * 0.12));
+                    }),
+                    borderColor: chartLine(),
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                            font: { size: 12 },
+                            color: chartText()
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.label + ': $' + ctx.parsed.r.toLocaleString('es-MX');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        ticks: { display: false },
+                        grid: { color: chartGrid() }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

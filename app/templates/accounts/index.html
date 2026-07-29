@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Cuentas{% endblock %}
+{% block page_title %}Cuentas{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('accounts.add') }}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Nueva Cuenta</a>
+{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <form method="GET">
+        <div class="card-toolbar">
+            <div class="search-row">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-bar-icon"></i>
+                    <input type="search" name="q" class="form-input form-input-sm" placeholder="Buscar cuentas..." value="{{ search_query or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                    <i data-lucide="filter"></i> Tipo
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel" style="display:none">
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <a href="{{ url_for('accounts.index') }}{% if search_query %}?q={{ search_query }}{% endif %}" class="filter-pill {% if not account_type %}active{% endif %}">Todas</a>
+                        <a href="?type=checking{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if account_type == 'checking' %}active{% endif %}">Debito</a>
+                        <a href="?type=savings{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if account_type == 'savings' %}active{% endif %}">Ahorro</a>
+                        <a href="?type=credit_card{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if account_type == 'credit_card' %}active{% endif %}">Credito</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="accounts-grid">
+        {% for account in accounts %}
+        <div class="account-card">
+            <div class="account-card-header">
+                <div class="account-icon-lg">
+                    <i data-lucide="{{ account.icon }}"></i>
+                </div>
+                <div class="account-actions">
+                    <a href="{{ url_for('accounts.edit', id=account.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                    <form method="POST" action="{{ url_for('accounts.delete', id=account.id) }}" class="inline-form" onsubmit="return confirm('Eliminar esta cuenta?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-icon"><i data-lucide="trash-2"></i></button>
+                    </form>
+                </div>
+            </div>
+            <h4 class="account-card-name">{{ account.name }}</h4>
+            <span class="account-card-type">{{ account.account_type | replace('_', ' ') | title }}</span>
+            <div class="account-card-balance">
+                ${{ "{:,.2f}".format(account.balance) }}
+            </div>
+            {% if account.account_type == 'credit_card' and account.credit_limit %}
+            <div class="account-card-meta">
+                <span>Limite: ${{ "{:,.2f}".format(account.credit_limit) }}</span>
+                <span>Disponible: ${{ "{:,.2f}".format(account.available_credit) }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"
+                     style="width: {{ [(account.balance * -1 / account.credit_limit * 100), 100] | min }}%"></div>
+            </div>
+            {% endif %}
+            {% if account.account_type == 'savings' and account.interest_rate %}
+            <span class="badge">{{ account.interest_rate }}% anual</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i data-lucide="landmark" class="empty-icon"></i>
+            <h3>No tienes cuentas</h3>
+            <p>Agrega tu primera cuenta para empezar a controlar tus finanzas</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

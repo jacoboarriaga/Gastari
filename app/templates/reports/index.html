@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Reportes{% endblock %}
+{% block page_title %}Reportes{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <div class="card-toolbar">
+        <div class="search-row">
+            <div class="search-bar" style="max-width:280px">
+                <i data-lucide="calendar" class="search-bar-icon"></i>
+                <input type="text" class="form-input form-input-sm" placeholder="{{ month_name }} {{ year }}" disabled style="background:var(--bg-hover);cursor:default">
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                <i data-lucide="filter"></i> Cambiar periodo
+            </button>
+        </div>
+        <div class="filter-panel" id="filterPanel" style="display:none">
+            <form method="GET" class="filters-form" style="flex-wrap:nowrap">
+                <select name="month" class="form-input form-input-sm" style="min-width:110px;flex:1" onchange="this.form.submit()">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if month == m %}selected{% endif %}>
+                        {{ ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][m-1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <select name="year" class="form-input form-input-sm" style="min-width:90px;flex:1" onchange="this.form.submit()">
+                    {% for y in range(2020, 2030) %}
+                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="summary-cards">
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="trending-up"></i></div>
+        <div class="card-info">
+            <span class="card-label">Ingresos {{ month_name }}</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_income) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="trending-down"></i></div>
+        <div class="card-info">
+            <span class="card-label">Gastos {{ month_name }}</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_expenses) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="piggy-bank"></i></div>
+        <div class="card-info">
+            <span class="card-label">Ahorro</span>
+            <span class="card-value">${{ "{:,.2f}".format(monthly_income - monthly_expenses) }}</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon"><i data-lucide="percent"></i></div>
+        <div class="card-info">
+            <span class="card-label">Tasa de ahorro</span>
+            <span class="card-value">{{ savings_rate }}%</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="card-header"><h3>Gastos por dia</h3></div>
+        <div class="chart-container"><canvas id="dailyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="card-header"><h3>Por categoria</h3></div>
+        <div class="chart-container chart-donut"><canvas id="categoryChart"></canvas></div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="card-header"><h3>Comparativa anual {{ year }}</h3></div>
+        <div class="chart-container"><canvas id="yearlyChart"></canvas></div>
+    </div>
+    <div class="section-card">
+        <div class="card-header"><h3>Saldo por cuentas</h3></div>
+        <div class="accounts-list">
+            {% for a in account_balances %}
+            <div class="account-item">
+                <div class="account-icon">
+                    <i data-lucide="{{ a.icon }}"></i>
+                </div>
+                <div class="account-info">
+                    <span class="account-name">{{ a.name }}</span>
+                    <span class="account-type">{{ a.account_type | replace('_', ' ') | title }}</span>
+                </div>
+                <span class="account-balance">
+                    ${{ "{:,.2f}".format(a.balance) }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dailyData = {{ daily_expenses | tojson }};
+    const categoryData = {{ expense_by_category | tojson }};
+    const yearlyData = {{ yearly_data | tojson }};
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    // Radar - Gastos por semana del mes
+    const weeklyLabels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'];
+    const weeklyData = [0, 0, 0, 0, 0];
+    dailyData.forEach((d, i) => {
+        const weekIndex = Math.min(Math.floor(i / 7), 4);
+        weeklyData[weekIndex] += d.amount;
+    });
+    new Chart(document.getElementById('dailyChart').getContext('2d'), {
+        type: 'radar',
+        data: {
+            labels: weeklyLabels,
+            datasets: [{
+                label: 'Gastos semanales',
+                data: weeklyData,
+                backgroundColor: chartBg(0.1),
+                borderColor: chartLine(),
+                borderWidth: 2,
+                pointBackgroundColor: chartLine(),
+                pointBorderColor: chartCardBg(),
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { r: { beginAtZero: true, grid: { color: chartGrid() }, angleLines: { color: chartGrid() }, pointLabels: { font: { size: 12, weight: 500 } }, ticks: { display: false } } }
+        }
+    });
+
+    // Polar Area - Gastos por categoria
+    if (categoryData.length > 0) {
+        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'polarArea',
+            data: {
+                labels: categoryData.map(c => c[0]),
+                datasets: [{
+                    data: categoryData.map(c => parseFloat(c[2])),
+                    backgroundColor: categoryData.map(function(c, i) {
+                        return chartBg(0.15 + (i * 0.12));
+                    }),
+                    borderColor: chartLine(),
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { padding: 10, usePointStyle: true, pointStyle: 'rectRounded', font: { size: 12 }, color: chartText() } },
+                    tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': $' + ctx.parsed.r.toLocaleString('es-MX'); } } }
+                },
+                scales: { r: { ticks: { display: false }, grid: { color: chartGrid() } } }
+            }
+        });
+    }
+
+    // Comparativa anual - Line chart
+    new Chart(document.getElementById('yearlyChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: yearlyData.map(d => d.income),
+                    borderColor: chartLine(),
+                    backgroundColor: chartBg(0.06),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: chartLine(),
+                    pointBorderColor: chartCardBg(),
+                    pointBorderWidth: 2,
+                    borderWidth: 2,
+                },
+                {
+                    label: 'Gastos',
+                    data: yearlyData.map(d => d.expenses),
+                    borderColor: chartLineSubtle(),
+                    backgroundColor: chartBg(0.03),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: chartLineSubtle(),
+                    pointBorderColor: chartCardBg(),
+                    pointBorderWidth: 2,
+                    borderWidth: 2,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { usePointStyle: true, padding: 16, color: chartText() } } },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: chartGrid() } } },
+            interaction: { intersect: false, mode: 'index' }
+        }
+    });
+});
+</script>
+{% endblock %}

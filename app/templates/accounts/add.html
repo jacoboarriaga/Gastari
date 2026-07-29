@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Nueva Cuenta{% endblock %}
+{% block page_title %}Nueva Cuenta{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    {% if form.errors %}
+    <div class="toast toast-danger" style="margin-bottom:16px">
+        <i data-lucide="alert-circle" class="toast-icon"></i>
+        <span class="toast-message">Hay errores en el formulario. Revisa los campos.</span>
+    </div>
+    {% endif %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nombre</label>
+                {{ form.name(class="form-input", placeholder="Ej: Nu, Hey, Efectivo") }}
+                {% for e in form.name.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Tipo de cuenta</label>
+                {{ form.account_type(class="form-input") }}
+                {% for e in form.account_type.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Saldo actual</label>
+                <div class="input-prefix"><span>$</span>{{ form.balance(class="form-input", placeholder="0.00", step="0.01") }}</div>
+            </div>
+            <div class="form-group">
+                <label>Moneda</label>
+                {{ form.currency(class="form-input") }}
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                {{ form.color(class="form-input form-color", type="color") }}
+            </div>
+        </div>
+
+        <div id="creditFields" style="display:none">
+            <h3 class="form-section-title">Datos de credito</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Limite de credito</label>
+                    <div class="input-prefix"><span>$</span>{{ form.credit_limit(class="form-input", placeholder="0.00", step="0.01") }}</div>
+                </div>
+                <div class="form-group">
+                    <label>Dia de cierre</label>
+                    {{ form.closing_day(class="form-input") }}
+                </div>
+                <div class="form-group">
+                    <label>Dia de pago</label>
+                    {{ form.payment_day(class="form-input") }}
+                </div>
+                <div class="form-group">
+                    <label>Tasa de interes (%)</label>
+                    {{ form.interest_rate(class="form-input", placeholder="0.0") }}
+                </div>
+            </div>
+        </div>
+
+        <div id="savingsFields" style="display:none">
+            <h3 class="form-section-title">Datos de ahorro</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tasa de interes (%)</label>
+                    {{ form.interest_rate(class="form-input", placeholder="0.0") }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('accounts.index') }}" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Crear Cuenta</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('account_type');
+    const creditFields = document.getElementById('creditFields');
+    const savingsFields = document.getElementById('savingsFields');
+    function toggleFields() {
+        creditFields.style.display = typeSelect.value === 'credit_card' ? 'block' : 'none';
+        savingsFields.style.display = typeSelect.value === 'savings' ? 'block' : 'none';
+    }
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();
+});
+</script>
+{% endblock %}

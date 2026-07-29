@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Movimientos{% endblock %}
+{% block page_title %}Movimientos{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('transactions.add') }}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Nuevo Movimiento</a>
+{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <form method="GET" id="filterForm">
+        <div class="card-toolbar">
+            <div class="search-row">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-bar-icon"></i>
+                    <input type="search" name="q" class="form-input form-input-sm" placeholder="Buscar movimientos..." value="{{ search_query or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                    <i data-lucide="filter"></i> Filtros
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel" style="display:none">
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <a href="?account={{ account_filter }}&q={{ search_query }}" class="filter-pill {% if not type_filter %}active{% endif %}">Todos</a>
+                        <a href="?type=income&account={{ account_filter }}&q={{ search_query }}" class="filter-pill {% if type_filter == 'income' %}active{% endif %}">Ingresos</a>
+                        <a href="?type=expense&account={{ account_filter }}&q={{ search_query }}" class="filter-pill {% if type_filter == 'expense' %}active{% endif %}">Gastos</a>
+                        <a href="?type=transfer&account={{ account_filter }}&q={{ search_query }}" class="filter-pill {% if type_filter == 'transfer' %}active{% endif %}">Transferencias</a>
+                    </div>
+                    <select name="account" class="form-input form-input-sm" onchange="this.form.submit()">
+                        <option value="0">Todas las cuentas</option>
+                        {% for a in accounts %}
+                        <option value="{{ a.id }}" {% if account_filter == a.id %}selected{% endif %}>{{ a.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="transactions-table">
+        <div class="table-header">
+            <span class="th-date">Fecha</span>
+            <span class="th-desc">Descripcion</span>
+            <span class="th-cat">Categoria</span>
+            <span class="th-account">Cuenta</span>
+            <span class="th-amount">Monto</span>
+            <span class="th-actions">Acciones</span>
+        </div>
+        {% for t in transactions %}
+        <div class="table-row">
+            <span class="td-date">{{ t.date.strftime('%d %b %Y') }}</span>
+            <span class="td-desc">
+                {% if t.transaction_type == 'income' %}<span class="badge badge-sm">Ingreso</span>
+                {% elif t.transaction_type == 'expense' %}<span class="badge badge-sm">Gasto</span>
+                {% else %}<span class="badge badge-sm">Transferencia</span>{% endif %}
+                {{ t.description or 'Sin descripcion' }}
+                {% if t.attachment_path %}<i data-lucide="paperclip" class="attachment-icon" title="Comprobante adjunto"></i>{% endif %}
+            </span>
+            <span class="td-cat">{% if t.category %}{{ t.category.name }}{% else %}-{% endif %}</span>
+            <span class="td-account">{{ t.account.name }}</span>
+            <span class="td-amount">
+                {% if t.transaction_type == 'income' %}+{% elif t.transaction_type == 'expense' %}-{% endif %}${{ "{:,.2f}".format(t.amount) }}
+            </span>
+            <span class="td-actions">
+                <a href="{{ url_for('transactions.edit', id=t.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                <form method="POST" action="{{ url_for('transactions.delete', id=t.id) }}" class="inline-form" onsubmit="return confirm('Eliminar este movimiento?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-icon"><i data-lucide="trash-2"></i></button>
+                </form>
+            </span>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i data-lucide="arrow-left-right" class="empty-icon"></i>
+            <h3>Sin movimientos</h3>
+            <p>Registra tu primer movimiento para empezar</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="card-footer">
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="?page={{ pagination.prev_num }}&type={{ type_filter }}&account={{ account_filter }}&q={{ search_query }}" class="btn btn-sm btn-ghost">Anterior</a>
+            {% endif %}
+            <span class="page-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+            <a href="?page={{ pagination.next_num }}&type={{ type_filter }}&account={{ account_filter }}&q={{ search_query }}" class="btn btn-sm btn-ghost">Siguiente</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

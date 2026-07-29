@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Registro{% endblock %}
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="logo-icon auth-logo">
+            <i data-lucide="wallet"></i>
+        </div>
+        <h1>Crear cuenta</h1>
+        <p>Empieza a controlar tus finanzas hoy</p>
+    </div>
+    <form method="POST" class="auth-form">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="name">Nombre</label>
+            {{ form.name(class="form-input", placeholder="Tu nombre") }}
+            {% for error in form.name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            {{ form.email(class="form-input", placeholder="tu@email.com") }}
+            {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="password">Contrasena</label>
+            {{ form.password(class="form-input", placeholder="Minimo 8 caracteres") }}
+            {% for error in form.password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="confirm_password">Confirmar Contrasena</label>
+            {{ form.confirm_password(class="form-input", placeholder="Repite tu contrasena") }}
+            {% for error in form.confirm_password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Crear Cuenta</button>
+    </form>
+    <div class="auth-footer">
+        <p>Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Iniciar sesion</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Configuraci&oacute;n{% endblock %}
+{% block page_title %}Configuraci&oacute;n{% endblock %}
+
+{% block content %}
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="settings-grid">
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <i data-lucide="palette"></i>
+                <div>
+                    <h3>Apariencia</h3>
+                    <p>Personaliza como se ve Gastari</p>
+                </div>
+            </div>
+            <div class="settings-fields">
+                <div class="form-group">
+                    <label>Tema</label>
+                    <div class="theme-options">
+                        <label class="theme-option {% if settings.theme == 'light' %}selected{% endif %}">
+                            <input type="radio" name="theme" value="light" {% if settings.theme == 'light' %}checked{% endif %}>
+                            <div class="theme-preview theme-light">
+                                <div class="theme-bar"></div>
+                                <div class="theme-content"><div></div><div></div></div>
+                            </div>
+                            <span>Claro</span>
+                        </label>
+                        <label class="theme-option {% if settings.theme == 'dark' %}selected{% endif %}">
+                            <input type="radio" name="theme" value="dark" {% if settings.theme == 'dark' %}checked{% endif %}>
+                            <div class="theme-preview theme-dark">
+                                <div class="theme-bar"></div>
+                                <div class="theme-content"><div></div><div></div></div>
+                            </div>
+                            <span>Oscuro</span>
+                        </label>
+                        <label class="theme-option {% if settings.theme == 'system' %}selected{% endif %}">
+                            <input type="radio" name="theme" value="system" {% if settings.theme == 'system' %}checked{% endif %}>
+                            <div class="theme-preview theme-system">
+                                <div class="theme-bar"></div>
+                                <div class="theme-content"><div></div><div></div></div>
+                            </div>
+                            <span>Sistema</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Formato de fecha</label>
+                    {{ form.date_format(class="form-input") }}
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.show_cents() }} Mostrar centavos en los montos
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <i data-lucide="coins"></i>
+                <div>
+                    <h3>Moneda y Pagos</h3>
+                    <p>Configura tu moneda y metodo de pago</p>
+                </div>
+            </div>
+            <div class="settings-fields">
+                <div class="form-group">
+                    <label>Moneda</label>
+                    {{ form.currency(class="form-input") }}
+                </div>
+                <div class="form-group">
+                    <label>Metodo de pago principal</label>
+                    {{ form.primary_payment_method(class="form-input") }}
+                </div>
+                <div class="form-group">
+                    <label>Cuenta de recibos de nomina</label>
+                    {{ form.paycheck_account_id(class="form-input") }}
+                    <span class="form-hint">Cuenta donde recibes tu ingreso principal</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <i data-lucide="bell"></i>
+                <div>
+                    <h3>Notificaciones</h3>
+                    <p>Controla tus alertas</p>
+                </div>
+            </div>
+            <div class="settings-fields">
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.notify_budget_alerts() }} Alertas cuando un presupuesto este por agotarse
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.notify_debt_reminders() }} Recordatorios de pago de deudas
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Alertar al % del presupuesto</label>
+                    <div class="input-prefix">
+                        <span>%</span>
+                        {{ form.monthly_budget_alert_pct(class="form-input", min="1", max="100", step="1") }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-actions">
+        <div style="display: flex; gap: 12px;">
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Guardar Cambios</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

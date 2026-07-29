@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Deudas{% endblock %}
+{% block page_title %}Deudas y Creditos{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('debts.add') }}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Nueva Deuda</a>
+{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <form method="GET" action="{{ url_for('debts.index') }}">
+        <div class="card-toolbar">
+            <div class="search-row">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-bar-icon"></i>
+                    <input type="search" name="q" class="form-input form-input-sm" placeholder="Buscar deuda..." value="{{ search_query or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                    <i data-lucide="filter"></i> Filtros
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel" style="display:none">
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <a href="{{ url_for('debts.index') }}{% if search_query %}?q={{ search_query }}{% endif %}" class="filter-pill {% if not debt_type %}active{% endif %}">Todas</a>
+                        <a href="?type=credit_card{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if debt_type == 'credit_card' %}active{% endif %}">Tarjeta</a>
+                        <a href="?type=personal_loan{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if debt_type == 'personal_loan' %}active{% endif %}">Prestamo</a>
+                        <a href="?type=mortgage{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if debt_type == 'mortgage' %}active{% endif %}">Hipoteca</a>
+                        <a href="?type=other{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if debt_type == 'other' %}active{% endif %}">Otro</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if total_owed > 0 %}
+    <div class="summary-cards summary-cards-compact">
+        <div class="summary-card">
+            <div class="card-icon"><i data-lucide="credit-card"></i></div>
+            <div class="card-info">
+                <span class="card-label">Total adeudado</span>
+                <span class="card-value">${{ "{:,.2f}".format(total_owed) }}</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon"><i data-lucide="list-checks"></i></div>
+            <div class="card-info">
+                <span class="card-label">Deudas activas</span>
+                <span class="card-value">{{ debts | length }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="debts-list">
+        {% for debt in debts %}
+        <div class="debt-card">
+            <div class="debt-header">
+                <div>
+                    <h4 class="debt-name">{{ debt.name }}</h4>
+                    <span class="badge">{{ debt.debt_type | replace('_', ' ') | title }}</span>
+                    {% if debt.creditor %}<span class="text-muted">{{ debt.creditor }}</span>{% endif %}
+                </div>
+                <div class="debt-actions">
+                    <button class="btn btn-sm btn-primary" onclick="document.getElementById('payModal{{ debt.id }}').style.display='flex'">
+                        <i data-lucide="dollar-sign"></i> Pagar
+                    </button>
+                    <a href="{{ url_for('debts.edit', id=debt.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                </div>
+            </div>
+            <div class="debt-progress">
+                <div class="debt-amounts">
+                    <span>Pagado: ${{ "{:,.2f}".format(debt.original_amount - debt.current_amount) }}</span>
+                    <span>Restante: ${{ "{:,.2f}".format(debt.current_amount) }}</span>
+                </div>
+                <div class="progress-bar progress-bar-lg">
+                    <div class="progress-fill" style="width: {{ debt.progress_percent }}%"></div>
+                </div>
+                <span class="debt-percent">{{ debt.progress_percent }}% pagado</span>
+            </div>
+            <div class="debt-meta">
+                {% if debt.interest_rate %}<span>Tasa: {{ debt.interest_rate }}%</span>{% endif %}
+                {% if debt.minimum_payment %}<span>Pago minimo: ${{ "{:,.2f}".format(debt.minimum_payment) }}</span>{% endif %}
+                {% if debt.due_day %}<span>Vence dia: {{ debt.due_day }}</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="payModal{{ debt.id }}" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+            <div class="modal-card">
+                <h3>Pagar "{{ debt.name }}"</h3>
+                <p>Saldo actual: ${{ "{:,.2f}".format(debt.current_amount) }}</p>
+                <form method="POST" action="{{ url_for('debts.pay', id=debt.id) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="pay_account_{{ debt.id }}">Cuenta a debitar</label>
+                        <select name="account_id" id="pay_account_{{ debt.id }}" class="form-input" required>
+                            <option value="">Selecciona una cuenta</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }} — ${{ "{:,.2f}".format(acc.balance) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pay_amount_{{ debt.id }}">Monto a pagar</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" name="amount" id="pay_amount_{{ debt.id }}" class="form-input" step="0.01" min="0.01" max="{{ debt.current_amount }}" required placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pay_notes_{{ debt.id }}">Notas (opcional)</label>
+                        <input type="text" name="notes" id="pay_notes_{{ debt.id }}" class="form-input" placeholder="Referencia, concepto..." maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="pay_receipt_{{ debt.id }}">Comprobante (opcional)</label>
+                        <input type="file" name="receipt" id="pay_receipt_{{ debt.id }}" class="form-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif">
+                        <span class="form-hint">PDF, imagen (max 10MB)</span>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('payModal{{ debt.id }}').style.display='none'">Cerrar</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Pagar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i data-lucide="check-circle" class="empty-icon"></i>
+            <h3>Sin deudas registradas</h3>
+            <p>Manten las finanzas bajo control</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

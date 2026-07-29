@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Presupuestos{% endblock %}
+{% block page_title %}Presupuestos{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('budgets.add') }}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Nuevo Presupuesto</a>
+{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <form method="GET" action="{{ url_for('budgets.index') }}">
+        <div class="card-toolbar">
+            <div class="search-row">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-bar-icon"></i>
+                    <input type="search" name="q" class="form-input form-input-sm" placeholder="Buscar presupuesto..." value="{{ search_query or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                    <i data-lucide="filter"></i> Estado
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel" style="display:none">
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <a href="{{ url_for('budgets.index') }}" class="filter-pill {% if not status_filter %}active{% endif %}">Todas</a>
+                        <a href="?status=active" class="filter-pill {% if status_filter == 'active' %}active{% endif %}">Activos</a>
+                        <a href="?status=future" class="filter-pill {% if status_filter == 'future' %}active{% endif %}">Proximos</a>
+                        <a href="?status=inactive" class="filter-pill {% if status_filter == 'inactive' %}active{% endif %}">Finalizados</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if active_budgets %}
+    <h4 class="subsection-title">Activos</h4>
+    <div class="debts-list">
+        {% for budget in active_budgets %}
+        <div class="budget-card budget-card-active">
+            <div class="debt-header">
+                <div>
+                    <h4 class="debt-name">{{ budget.name }}</h4>
+                    <div class="budget-header-meta">
+                        {% if budget.category %}<span class="badge">{{ budget.category.name }}</span>{% endif %}
+                        <span class="badge badge-sm">
+                            {{ budget.status_label }}
+                        </span>
+                    </div>
+                </div>
+                <div class="debt-actions">
+                    <a href="{{ url_for('budgets.edit', id=budget.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                    <form method="POST" action="{{ url_for('budgets.delete', id=budget.id) }}" class="inline-form" onsubmit="return confirm('Eliminar este presupuesto?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-icon"><i data-lucide="trash-2"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="budget-amounts">
+                <span class="budget-spent">${{ "{:,.2f}".format(budget.spent) }}</span>
+                <span class="budget-of">de ${{ "{:,.2f}".format(budget.amount) }}</span>
+            </div>
+
+            <div class="debt-progress">
+                <div class="progress-bar progress-bar-lg">
+                    <div class="progress-fill progress-animated"
+                         style="width: {{ [budget.progress_percent, 100] | min }}%"
+                         data-target="{{ [budget.progress_percent, 100] | min }}"></div>
+                </div>
+                <div class="budget-progress-meta">
+                    <span class="debt-percent">{{ budget.progress_percent }}% utilizado</span>
+                    <span class="debt-percent">Restante: ${{ "{:,.2f}".format(budget.remaining) }}</span>
+                </div>
+            </div>
+
+            <div class="budget-velocity">
+                <div class="velocity-row">
+                    <span class="velocity-item">
+                        <i data-lucide="calendar-days" class="velocity-icon"></i>
+                        {{ budget.days_left }} dias restantes
+                    </span>
+                    <span class="velocity-item">
+                        <i data-lucide="trending-up" class="velocity-icon"></i>
+                        ${{ "{:,.2f}".format(budget.daily_average) }}/dia
+                    </span>
+                </div>
+                {% if budget.projected_total > 0 %}
+                <div class="velocity-projection">
+                    Proyeccion: <strong>${{ "{:,.2f}".format(budget.projected_total) }}</strong>
+                    {% if budget.projected_total > budget.amount %}
+                    <span class="text-muted">(+${{ "{:,.2f}".format(budget.projected_total - budget.amount) }} sobre limite)</span>
+                    {% else %}
+                    <span class="text-muted">(${{ "{:,.2f}".format(budget.amount - budget.projected_total) }} bajo limite)</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="debt-meta">
+                <span>Diario: ${{ "{:,.2f}".format(budget.daily_budget) }}</span>
+                <span>{{ budget.start_date.strftime('%d %b') }} - {{ budget.end_date.strftime('%d %b %Y') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set future_budgets = [] %}
+    {% for b in budgets if b.is_active and b not in active_budgets %}
+        {% if future_budgets.append(b) %}{% endif %}
+    {% endfor %}
+    {% set other_budgets = budgets | rejectattr('is_active') | list %}
+
+    {% if future_budgets and (not status_filter or status_filter == 'future') %}
+    <h4 class="subsection-title">Proximos</h4>
+    <div class="debts-list">
+        {% for budget in future_budgets %}
+        <div class="budget-card">
+            <div class="debt-header">
+                <div>
+                    <h4 class="debt-name">{{ budget.name }}</h4>
+                    <div class="budget-header-meta">
+                        {% if budget.category %}<span class="badge">{{ budget.category.name }}</span>{% endif %}
+                        <span class="badge badge-sm">Proximo</span>
+                    </div>
+                </div>
+                <div class="debt-actions">
+                    <a href="{{ url_for('budgets.edit', id=budget.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                    <form method="POST" action="{{ url_for('budgets.delete', id=budget.id) }}" class="inline-form" onsubmit="return confirm('Eliminar este presupuesto?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-icon"><i data-lucide="trash-2"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="budget-amounts">
+                <span class="budget-spent">${{ "{:,.2f}".format(budget.amount) }}</span>
+                <span class="budget-of">presupuestado</span>
+            </div>
+            <div class="debt-meta">
+                <span>{{ budget.start_date.strftime('%d %b') }} - {{ budget.end_date.strftime('%d %b %Y') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if other_budgets and (not status_filter or status_filter == 'inactive') %}
+    <h4 class="subsection-title">Anteriores</h4>
+    <div class="debts-list">
+        {% for budget in other_budgets %}
+        <div class="budget-card budget-card-inactive">
+            <div class="debt-header">
+                <div>
+                    <h4 class="debt-name">{{ budget.name }}</h4>
+                    <div class="budget-header-meta">
+                        {% if budget.category %}<span class="badge">{{ budget.category.name }}</span>{% endif %}
+                        <span class="badge badge-sm">Finalizado</span>
+                    </div>
+                </div>
+            </div>
+            <div class="budget-amounts">
+                <span class="budget-spent">${{ "{:,.2f}".format(budget.spent) }}</span>
+                <span class="budget-of">de ${{ "{:,.2f}".format(budget.amount) }}</span>
+            </div>
+            <div class="debt-progress">
+                <div class="progress-bar progress-bar-lg">
+                    <div class="progress-fill"
+                         style="width: {{ [budget.progress_percent, 100] | min }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not budgets %}
+    <div class="empty-state">
+        <i data-lucide="target" class="empty-icon"></i>
+        <h3>Sin presupuestos</h3>
+        <p>Crea un presupuesto para controlar tus gastos</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

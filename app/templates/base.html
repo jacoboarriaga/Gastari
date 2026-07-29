@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="{{ current_user.settings.theme if current_user.is_authenticated and current_user.settings else 'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <title>{% block title %}Gastari{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <meta name="apple-mobile-web-app-title" content="Gastari">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    {% set settings = current_user.settings %}
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <span class="logo-text">Gastari</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('transactions.index') }}" class="nav-item {% if 'transaction' in request.endpoint %}active{% endif %}">
+                <i data-lucide="arrow-left-right"></i>
+                <span>Movimientos</span>
+            </a>
+            <a href="{{ url_for('accounts.index') }}" class="nav-item {% if 'account' in request.endpoint %}active{% endif %}">
+                <i data-lucide="landmark"></i>
+                <span>Cuentas</span>
+            </a>
+            <a href="{{ url_for('reports.index') }}" class="nav-item {% if 'report' in request.endpoint %}active{% endif %}">
+                <i data-lucide="bar-chart-3"></i>
+                <span>Reportes</span>
+            </a>
+            <a href="{{ url_for('budgets.index') }}" class="nav-item {% if 'budget' in request.endpoint %}active{% endif %}">
+                <i data-lucide="target"></i>
+                <span>Presupuestos</span>
+            </a>
+            <a href="{{ url_for('debts.index') }}" class="nav-item {% if 'debt' in request.endpoint %}active{% endif %}">
+                <i data-lucide="credit-card"></i>
+                <span>Deudas</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('settings.index') }}" class="nav-item {% if 'settings' in request.endpoint %}active{% endif %}">
+                <i data-lucide="settings"></i>
+                <span>Configuraci&oacute;n</span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="user-info">
+                <div class="user-avatar">{{ current_user.name[0] | upper }}</div>
+                <span class="user-name">{{ current_user.name }}</span>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item logout-btn">
+                <i data-lucide="log-out"></i>
+                <span>Salir</span>
+            </a>
+        </div>
+    </aside>
+
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i data-lucide="menu"></i>
+    </button>
+
+    <main class="main-content" id="mainContent">
+        <header class="top-bar">
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="top-actions">
+                {% block top_actions %}{% endblock %}
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="toast-container" id="toastContainer">
+            {% for category, message in messages %}
+            <div class="toast toast-{{ category }}" role="alert" aria-live="polite">
+                <i data-lucide="{% if category == 'success' %}check-circle{% elif category == 'danger' %}alert-circle{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}" class="toast-icon"></i>
+                <span class="toast-message">{{ message }}</span>
+                <button type="button" onclick="this.closest('.toast').remove()" aria-label="Cerrar" class="toast-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="bottom-nav" id="bottomNav">
+        <div class="bottom-nav-inner">
+            <a href="{{ url_for('dashboard.index') }}" class="bottom-nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i data-lucide="house"></i>
+            </a>
+            <a href="{{ url_for('transactions.index') }}" class="bottom-nav-item {% if 'transaction' in request.endpoint %}active{% endif %}">
+                <i data-lucide="arrow-left-right"></i>
+            </a>
+            <a href="{{ url_for('transactions.add') }}" class="bottom-nav-item {% if request.endpoint == 'transactions.add' %}active{% endif %}">
+                <i data-lucide="plus"></i>
+            </a>
+            <a href="{{ url_for('accounts.index') }}" class="bottom-nav-item {% if 'account' in request.endpoint %}active{% endif %}">
+                <i data-lucide="wallet"></i>
+            </a>
+            <button class="bottom-nav-item" id="moreBtn" onclick="toggleMoreMenu()" type="button" aria-label="Mas opciones">
+                <i data-lucide="ellipsis"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom Sheet -->
+    <div class="bottom-sheet-overlay" id="bottomSheetOverlay" onclick="closeBottomSheet()"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="bottom-sheet-handle"></div>
+        <a href="{{ url_for('reports.index') }}" class="bottom-sheet-item">
+            <div class="bs-icon"><i data-lucide="bar-chart-3"></i></div>
+            <span>Reportes</span>
+        </a>
+        <a href="{{ url_for('budgets.index') }}" class="bottom-sheet-item">
+            <div class="bs-icon"><i data-lucide="target"></i></div>
+            <span>Presupuestos</span>
+        </a>
+        <a href="{{ url_for('debts.index') }}" class="bottom-sheet-item">
+            <div class="bs-icon"><i data-lucide="credit-card"></i></div>
+            <span>Deudas</span>
+        </a>
+        <a href="{{ url_for('settings.index') }}" class="bottom-sheet-item">
+            <div class="bs-icon"><i data-lucide="settings"></i></div>
+            <span>Configuraci&oacute;n</span>
+        </a>
+    </div>
+
+    {% else %}
+    <div class="auth-container">
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+    <script>lucide.createIcons();</script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('{{ url_for('static', filename='sw.js') }}');
+    }
+    </script>
+</body>
+</html>

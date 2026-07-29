@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Login{% endblock %}
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="logo-icon auth-logo">
+            <i data-lucide="wallet"></i>
+        </div>
+        <h1>Bienvenido de vuelta</h1>
+        <p>Inicia sesion para administrar tus finanzas</p>
+    </div>
+    <form method="POST" class="auth-form">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="email">Email</label>
+            {{ form.email(class="form-input", placeholder="tu@email.com") }}
+            {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="password">Contrasena</label>
+            {{ form.password(class="form-input", placeholder="Tu contrasena") }}
+            {% for error in form.password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Iniciar Sesion</button>
+    </form>
+    <div class="auth-footer">
+        <p>No tienes cuenta? <a href="{{ url_for('auth.register') }}">Crear cuenta</a></p>
+    </div>
+</div>
+{% endblock %}

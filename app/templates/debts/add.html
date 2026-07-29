@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Nueva Deuda{% endblock %}
+{% block page_title %}Nueva Deuda{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    {% if form.errors %}
+    <div class="toast toast-danger" style="margin-bottom:16px">
+        <i data-lucide="alert-circle" class="toast-icon"></i>
+        <span class="toast-message">Hay errores en el formulario. Revisa los campos.</span>
+    </div>
+    {% endif %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nombre *</label>
+                {{ form.name(class="form-input", placeholder="Ej: Tarjeta Nu, Prestamo") }}
+                {% for e in form.name.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Tipo *</label>
+                {{ form.debt_type(class="form-input") }}
+                {% for e in form.debt_type.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Monto original *</label>
+                <div class="input-prefix"><span>$</span>{{ form.original_amount(class="form-input", step="0.01", placeholder="0.00") }}</div>
+                {% for e in form.original_amount.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Monto actual (lo que debes) *</label>
+                <div class="input-prefix"><span>$</span>{{ form.current_amount(class="form-input", step="0.01", placeholder="0.00") }}</div>
+                {% for e in form.current_amount.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Tasa de interes (%)</label>
+                {{ form.interest_rate(class="form-input", step="0.01", placeholder="0.00") }}
+                {% for e in form.interest_rate.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Pago minimo</label>
+                <div class="input-prefix"><span>$</span>{{ form.minimum_payment(class="form-input", step="0.01", placeholder="0.00") }}</div>
+                {% for e in form.minimum_payment.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Dia de vencimiento</label>
+                {{ form.due_day(class="form-input") }}
+                {% for e in form.due_day.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Acreedor</label>
+                {{ form.creditor(class="form-input", placeholder="Banco, Financiera...") }}
+                {% for e in form.creditor.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Fecha inicio</label>
+                {{ form.start_date(class="form-input", type="date") }}
+                {% for e in form.start_date.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Fecha fin estimada</label>
+                {{ form.end_date(class="form-input", type="date") }}
+                {% for e in form.end_date.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+        </div>
+        <div class="form-actions">
+            <a href="{{ url_for('debts.index') }}" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Crear Deuda</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

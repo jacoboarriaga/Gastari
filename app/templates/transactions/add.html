@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Nuevo Movimiento{% endblock %}
+{% block page_title %}Nuevo Movimiento{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    {% if form.errors %}
+    <div class="toast toast-danger" style="margin-bottom:16px">
+        <i data-lucide="alert-circle" class="toast-icon"></i>
+        <span class="toast-message">Hay errores en el formulario. Revisa los campos.</span>
+    </div>
+    {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Tipo</label>
+                {{ form.transaction_type(class="form-input", id="txType") }}
+            </div>
+            <div class="form-group">
+                <label>Cuenta</label>
+                {{ form.account_id(class="form-input") }}
+            </div>
+            <div class="form-group">
+                <label>Monto</label>
+                <div class="input-prefix">
+                    <span>$</span>
+                    {{ form.amount(class="form-input", placeholder="0.00", step="0.01") }}
+                </div>
+                {% for e in form.amount.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                {{ form.date(class="form-input", type="date") }}
+            </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                {{ form.category_id(class="form-input") }}
+            </div>
+            <div class="form-group">
+                <label>Descripcion</label>
+                {{ form.description(class="form-input", placeholder="Ej: Super, Gasolina, Nomina...") }}
+            </div>
+        </div>
+
+        <div id="transferField" style="display:none">
+            <div class="form-group">
+                <label>Cuenta destino</label>
+                {{ form.to_account_id(class="form-input") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Notas</label>
+            {{ form.notes(class="form-input", placeholder="Notas opcionales...") }}
+        </div>
+
+        <div class="form-group">
+            <label>Comprobante (opcional)</label>
+            <input type="file" name="receipt" class="form-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif">
+            <span class="form-hint">PDF, imagen (max 10MB)</span>
+        </div>
+
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label class="checkbox-label">
+                    {{ form.is_recurring() }} Movimiento recurrente
+                </label>
+            </div>
+            <div class="form-group" id="recurringField" style="display:none">
+                <label>Frecuencia</label>
+                {{ form.recurring_frequency(class="form-input") }}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('transactions.index') }}" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Crear Movimiento</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const txType = document.getElementById('txType');
+    const transferField = document.getElementById('transferField');
+    const recurring = document.getElementById('is_recurring');
+    const recurringField = document.getElementById('recurringField');
+
+    function toggleTransfer() {
+        transferField.style.display = txType.value === 'transfer' ? 'block' : 'none';
+    }
+    function toggleRecurring() {
+        recurringField.style.display = recurring.checked ? 'block' : 'none';
+    }
+    txType.addEventListener('change', toggleTransfer);
+    recurring.addEventListener('change', toggleRecurring);
+    toggleTransfer();
+    toggleRecurring();
+});
+</script>
+{% endblock %}
