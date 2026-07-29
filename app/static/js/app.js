@@ -152,3 +152,41 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
         applyTheme('system');
     }
 });
+
+// --- Page loading bar (PWA navigation feedback) ---
+(function() {
+    var loader = document.getElementById('pageLoader');
+    if (!loader) return;
+
+    // Complete the loading bar when page is fully loaded
+    function finishLoad() {
+        loader.classList.remove('loading');
+        // Briefly show full bar, then hide
+        loader.style.width = '100%';
+        setTimeout(function() {
+            loader.style.width = '0';
+        }, 200);
+    }
+
+    // Trigger on any link/form click
+    document.addEventListener('click', function(e) {
+        var link = e.target.closest('a');
+        if (link) {
+            var href = link.getAttribute('href');
+            if (href && href.indexOf('#') !== 0 && href.indexOf('javascript:') !== 0 && !link.hasAttribute('download')) {
+                loader.classList.add('loading');
+            }
+        }
+    });
+
+    document.addEventListener('submit', function() {
+        loader.classList.add('loading');
+    });
+
+    // Stop after window loads
+    if (document.readyState === 'complete') {
+        finishLoad();
+    } else {
+        window.addEventListener('load', finishLoad);
+    }
+})();

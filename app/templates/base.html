@@ -21,6 +21,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <div id="pageLoader" class="page-loader"></div>
     {% if current_user.is_authenticated %}
     {% set settings = current_user.settings %}
     <aside class="sidebar" id="sidebar">

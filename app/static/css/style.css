@@ -51,7 +51,7 @@
     --sidebar-border: #f2f2f7;
     --glass-bg: rgba(255,255,255,0.72);
     --glass-border: rgba(255,255,255,0.4);
-    --bottomnav-h: 64px;
+    --bottomnav-h: 52px;
     /* Chart colors */
     --chart-grid: rgba(0,0,0,0.06);
     --chart-fill: rgba(0,0,0,0.1);
@@ -237,7 +237,7 @@ button { font-family: inherit; }
 }
 .page-title { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
 .top-actions { display: flex; gap: 8px; align-items: center; }
-.content { padding: 24px 32px; max-width: 1400px; }
+.content { padding: 24px 32px; max-width: 1400px; animation: pageFadeIn 0.35s cubic-bezier(0.4,0,0.2,1); }
 
 /* --- Toast Notifications --- */
 .toast-container {
@@ -663,21 +663,47 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
 .modal-card h3 { font-size: 1.1rem; margin-bottom: 4px; color: var(--text-primary); }
 .modal-card p { color: var(--text-secondary); margin-bottom: 16px; font-size: 0.88rem; }
 
-/* --- FAB (Desktop) --- */
+/* --- Page Loader (top loading bar) --- */
+.page-loader {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 3px;
+    z-index: 9999;
+    background: transparent;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.page-loader::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 100%;
+    background: var(--indigo);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.4s ease;
+}
+.page-loader.loading::before {
+    width: 60%;
+    animation: loader-progress 1.2s ease-in-out infinite;
+}
+@keyframes loader-progress {
+    0%   { left: -40%; width: 30%; }
+    50%  { left: 35%;  width: 50%; }
+    100% { left: 110%; width: 30%; }
+}
+
 /* --- Mobile Bottom Nav (Minimalist Floating Dock) --- */
 .bottom-nav {
     display: none;
     position: fixed;
-    bottom: 16px;
+    bottom: max(8px, env(safe-area-inset-bottom, 8px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
     width: 88%;
     max-width: 480px;
-    padding: 10px 16px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
-    border-radius: 24px;
-    background: rgba(255,255,255,0.7);
+    padding: 6px 12px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.72);
     -webkit-backdrop-filter: saturate(180%) blur(40px);
     backdrop-filter: saturate(180%) blur(40px);
     border: 0.5px solid rgba(0,0,0,0.06);
@@ -691,30 +717,29 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
 .bottom-nav-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0;
+    justify-content: space-around;
 }
 .bottom-nav-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 0;
+    flex: 1;
+    height: 40px;
     color: var(--text-muted);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     transition: color 0.2s ease;
     position: relative;
-    width: 44px; height: 44px;
     border: none; background: none; cursor: pointer;
-    border-radius: 12px;
+    border-radius: 10px;
 }
-.bottom-nav-item svg { width: 24px; height: 24px; transition: transform 0.15s ease; }
+.bottom-nav-item svg { width: 22px; height: 22px; transition: transform 0.15s ease; }
 .bottom-nav-item.active { color: var(--indigo); }
 .bottom-nav-item.active svg { transform: scale(1.08); }
 .bottom-nav-item::after {
     content: '';
     position: absolute;
-    bottom: 2px;
+    bottom: 1px;
     left: 50%;
     transform: translateX(-50%) scaleX(0);
     width: 4px; height: 4px;
@@ -726,8 +751,6 @@ select.form-input-sm { padding-right: 32px; background-position: right 8px cente
     transform: translateX(-50%) scaleX(1);
 }
 .bottom-nav-item:active svg { transform: scale(0.88); }
-
-/* Center FAB */
 
 /* --- Bottom Sheet --- */
 .bottom-sheet-overlay {
