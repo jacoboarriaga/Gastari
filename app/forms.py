@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, FloatField, SelectField, TextAreaField, DateField, BooleanField, IntegerField
+from wtforms import StringField, PasswordField, FloatField, SelectField, TextAreaField, DateField, BooleanField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, NumberRange, Optional
 from email_validator import validate_email
 
@@ -82,8 +82,7 @@ class CategoryForm(FlaskForm):
     category_type = SelectField(
         "Tipo", choices=[("income", "Ingreso"), ("expense", "Gasto")], validators=[DataRequired()]
     )
-    icon = StringField("Icono", default="tag")
-    color = StringField("Color", default="#6366F1")
+    submit = SubmitField("Guardar")
 
 
 class DebtForm(FlaskForm):

@@ -209,3 +209,24 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
         }
     });
 })();
+
+// --- Liquid Glass (mobile): force dark theme + specular highlight ---
+(function() {
+    var isMobileNow = window.matchMedia('(max-width: 768px)').matches;
+    if (!isMobileNow) return;
+
+    // Force dark so charts render dark glass too
+    document.documentElement.setAttribute('data-theme', 'dark');
+
+    // Specular highlight follow pointer
+    var glassEls = document.querySelectorAll(
+        '.summary-card, .section-card, .chart-card, .form-card, .account-card, .modal-card, .bottom-sheet, .settings-section'
+    );
+    glassEls.forEach(function(el) {
+        el.addEventListener('pointermove', function(e) {
+            var r = el.getBoundingClientRect();
+            el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+            el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+        });
+    });
+})();

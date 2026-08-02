@@ -32,6 +32,7 @@ def create_app(config_name="default"):
         reports_bp,
         debts_bp,
         budgets_bp,
+        categories_bp,
         settings_bp,
         api_bp,
     )
@@ -43,6 +44,7 @@ def create_app(config_name="default"):
     app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(debts_bp, url_prefix="/debts")
     app.register_blueprint(budgets_bp, url_prefix="/budgets")
+    app.register_blueprint(categories_bp, url_prefix="/categories")
     app.register_blueprint(settings_bp, url_prefix="/settings")
     app.register_blueprint(api_bp, url_prefix="/api")
 

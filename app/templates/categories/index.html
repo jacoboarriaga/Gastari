@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Gastari - Categorias{% endblock %}
+{% block page_title %}Categorias{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('categories.add') }}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Nueva Categoria</a>
+{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <form method="GET">
+        <div class="card-toolbar">
+            <div class="search-row">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-bar-icon"></i>
+                    <input type="search" name="q" class="form-input form-input-sm" placeholder="Buscar categorias..." value="{{ search_query or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()">
+                    <i data-lucide="filter"></i> Tipo
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel" style="display:none">
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <a href="{{ url_for('categories.index') }}{% if search_query %}?q={{ search_query }}{% endif %}" class="filter-pill {% if not category_type %}active{% endif %}">Todas</a>
+                        <a href="?type=expense{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if category_type == 'expense' %}active{% endif %}">Gasto</a>
+                        <a href="?type=income{% if search_query %}&q={{ search_query }}{% endif %}" class="filter-pill {% if category_type == 'income' %}active{% endif %}">Ingreso</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="cat-list">
+        {% for cat in categories %}
+        <div class="cat-item">
+            <div class="cat-info">
+                <div class="cat-icon">
+                    <i data-lucide="{% if cat.category_type == 'income' %}trending-up{% else %}trending-down{% endif %}"></i>
+                </div>
+                <div>
+                    <span class="cat-name">{{ cat.name }}</span>
+                    <span class="cat-type">{{ 'Ingreso' if cat.category_type == 'income' else 'Gasto' }}</span>
+                </div>
+            </div>
+            <div class="cat-actions">
+                <a href="{{ url_for('categories.edit', id=cat.id) }}" class="btn-icon"><i data-lucide="pencil"></i></a>
+                <form method="POST" action="{{ url_for('categories.delete', id=cat.id) }}" class="inline-form" onsubmit="return confirm('Eliminar categoria? Las transacciones existentes no se veran afectadas.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-icon"><i data-lucide="trash-2"></i></button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i data-lucide="tags" class="empty-icon"></i>
+            <h3>No tienes categorias</h3>
+            <p>Crea tu primera categoria para organizar tus movimientos</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

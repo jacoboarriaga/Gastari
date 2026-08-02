@@ -60,7 +60,7 @@
             </span>
             <span class="td-cat">{% if t.category %}{{ t.category.name }}{% else %}-{% endif %}</span>
             <span class="td-account">{{ t.account.name }}</span>
-            <span class="td-amount">
+            <span class="td-amount {% if t.transaction_type == 'income' %}amt-pos{% elif t.transaction_type == 'expense' %}amt-neg{% else %}amt-neutral{% endif %}">
                 {% if t.transaction_type == 'income' %}+{% elif t.transaction_type == 'expense' %}-{% endif %}${{ "{:,.2f}".format(t.amount) }}
             </span>
             <span class="td-actions">

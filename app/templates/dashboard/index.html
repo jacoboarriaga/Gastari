@@ -103,7 +103,7 @@
                     <span class="transaction-desc">{{ t.description or (t.category.name if t.category else 'Sin descripcion') }}</span>
                     <span class="transaction-date">{{ t.date.strftime('%d %b') }}</span>
                 </div>
-                <span class="transaction-amount">
+                <span class="transaction-amount {% if t.transaction_type == 'income' %}amt-pos{% elif t.transaction_type == 'expense' %}amt-neg{% else %}amt-neutral{% endif %}">
                     {% if t.transaction_type == 'income' %}+{% elif t.transaction_type == 'expense' %}-{% endif %}${{ "{:,.2f}".format(t.amount) }}
                 </span>
             </div>
