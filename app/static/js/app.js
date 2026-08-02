@@ -122,17 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- Close FAB on outside click ---
-    document.addEventListener('click', function(e) {
-        var fabContainer = document.querySelector('.fab-container:not(#mobileFabMenu)');
-        if (fabContainer && !fabContainer.contains(e.target)) {
-            var menu = document.getElementById('fabMenu');
-            var fab = document.getElementById('fabMain');
-            if (menu) menu.classList.remove('show');
-            if (fab) fab.style.transform = '';
-        }
-    });
-
     // --- Format money inputs ---
     document.querySelectorAll('input[type="number"]').forEach(function(input) {
         if (input.getAttribute('step') === '0.01') {
@@ -210,23 +199,48 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
     });
 })();
 
-// --- Liquid Glass (mobile): force dark theme + specular highlight ---
+// --- Liquid Glass: specular highlight (todas las plataformas) ---
 (function() {
-    var isMobileNow = window.matchMedia('(max-width: 768px)').matches;
-    if (!isMobileNow) return;
-
-    // Force dark so charts render dark glass too
-    document.documentElement.setAttribute('data-theme', 'dark');
-
-    // Specular highlight follow pointer
-    var glassEls = document.querySelectorAll(
-        '.summary-card, .section-card, .chart-card, .form-card, .account-card, .modal-card, .bottom-sheet, .settings-section'
-    );
+    var glassSelector = '.glass, .section-card, .summary-card, .chart-card, .form-card, .account-card, .modal-card, .bottom-sheet, .toast, .settings-section, .filter-panel, .budget-card, .debt-card, .auth-card';
+    var glassEls = document.querySelectorAll(glassSelector);
     glassEls.forEach(function(el) {
         el.addEventListener('pointermove', function(e) {
             var r = el.getBoundingClientRect();
             el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
             el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
         });
+        el.addEventListener('pointerleave', function() {
+            el.style.setProperty('--mx', '50%');
+            el.style.setProperty('--my', '0%');
+        });
     });
+})();
+
+// --- Tab bar: indicador fluido ---
+(function() {
+    var indicator = document.getElementById('tabIndicator');
+    if (!indicator) return;
+
+    var items = document.querySelectorAll('.bottom-nav-item');
+    var activeIndex = Array.prototype.indexOf.call(items, document.querySelector('.bottom-nav-item.active'));
+
+    function positionIndicator() {
+        if (activeIndex < 0) return;
+        indicator.style.transform = 'translateX(' + (activeIndex * 100) + '%)';
+    }
+
+    // Move indicator on tab click (progressive enhancement)
+    items.forEach(function(item, idx) {
+        item.addEventListener('click', function() {
+            activeIndex = idx;
+            indicator.style.transform = 'translateX(' + (idx * 100) + '%)';
+        });
+    });
+
+    // Recompute after lucide replaces icons (layout shift)
+    if (document.readyState === 'complete') {
+        positionIndicator();
+    } else {
+        window.addEventListener('load', positionIndicator);
+    }
 })();

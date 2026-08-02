@@ -1,8 +1,7 @@
-const CACHE = 'gastari-v2';
+const CACHE = 'gastari-v3';
 const urlsToCache = [
   '/',
   '/static/css/style.css',
-  '/static/css/mobile-glass.css',
   '/static/js/app.js',
 ];
 

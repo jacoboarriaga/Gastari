@@ -273,7 +273,7 @@ class UserSettings(db.Model):
 
     currency = db.Column(db.String(3), default="MXN")
     currency_symbol = db.Column(db.String(5), default="$")
-    theme = db.Column(db.String(10), default="light")
+    theme = db.Column(db.String(10), default="dark")
     date_format = db.Column(db.String(20), default="DD/MM/YYYY")
     language = db.Column(db.String(5), default="es")
     show_cents = db.Column(db.Boolean, default=False)
